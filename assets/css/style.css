@@ -311,6 +311,11 @@ tbody td:nth-child(2) {
   border-top: 1.5px solid #111827;
 }
 
+.result-best td {
+  background: transparent;
+  border-top: 1.5px solid #111827;
+}
+
 .bib-header {
   display: flex;
   align-items: center;

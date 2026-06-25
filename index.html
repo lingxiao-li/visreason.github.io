@@ -9,7 +9,7 @@
     <meta property="og:description" content="489K visual-CoT examples and a 165K VisReason-Pro subset for global-to-local, spatially grounded multimodal reasoning.">
     <meta property="og:type" content="website">
     <meta property="og:image" content="assets/images/visreason/teaser.png">
-    <link rel="stylesheet" href="assets/css/style.css?v=vr20260624">
+    <link rel="stylesheet" href="assets/css/style.css?v=vr20260624b">
   </head>
   <body>
     <main>
@@ -43,7 +43,9 @@
           <img src="assets/images/visreason/teaser.png?v=vr1" alt="VisReason teaser showing multi-round visual reasoning across fine-grained, document, and spatial tasks.">
           <figcaption>
             VisReason trains MLLMs to reason globally, localize relevant regions, zoom in when needed,
-            and verify answers through spatially grounded visual Chain-of-Thought.
+            and verify answers through spatially grounded visual Chain-of-Thought. The teaser highlights the central behavior
+            of the dataset: the model first reads the whole image, then narrows attention to answer-critical evidence instead
+            of relying on a single global representation.
           </figcaption>
         </figure>
       </section>
@@ -93,13 +95,17 @@
           Existing visual reasoning datasets are often limited in scale, domain breadth, or stepwise grounding.
           VisReason addresses these gaps with a unified annotation format that supports global-to-local reasoning, RoI localization,
           and depth-aware spatial supervision from monocular depth and segmentation cues.
+          The examples below show how this supervision is represented directly in the training data: each answer is paired with
+          the intermediate visual evidence that the model should inspect.
         </p>
 
         <figure class="wide-figure">
           <img src="assets/images/visreason/data_demo.png?v=vr1" alt="Examples of VisReason annotations with multi-round visual Chain-of-Thought and region grounding.">
           <figcaption>
             Each image-question pair includes compact multi-round visual CoT: a scene sketch, optional zoom to a predicted RoI,
-            and a rationale that grounds the final answer in localized evidence.
+            and a rationale that grounds the final answer in localized evidence. The figure illustrates multiple domains,
+            including fine-grained recognition, text/document understanding, and spatial relation reasoning, to show that the
+            same annotation format can supervise very different visual reasoning skills.
           </figcaption>
         </figure>
 
@@ -129,7 +135,8 @@
           <img src="assets/images/visreason/dataset_stats.png?v=vr1" alt="Statistics of VisReason including CoT rounds, bounding box size, and response length.">
           <figcaption>
             VisReason provides rich multi-round supervision across diverse sources. Answer-critical RoIs are often small,
-            reinforcing the need for models to localize, zoom, and verify.
+            reinforcing the need for models to localize, zoom, and verify. The statistics summarize how many reasoning rounds
+            are needed, how large the selected regions tend to be, and how much textual supervision each round contributes.
           </figcaption>
         </figure>
       </section>
@@ -140,13 +147,16 @@
           VisReason starts from image-question-answer triples and expands them into process-level supervision.
           VisReason-Pro further augments images with semantic segments and monocular depth to produce depth-aware spatial questions,
           target boxes, compact visual CoT traces, and verified final annotations.
+          This pipeline is designed to keep the annotations compact while still making the reasoning path auditable: generated
+          RoIs and answers are checked and corrected before being released as supervision.
         </p>
 
         <figure>
           <img src="assets/images/visreason/pipeline.png?v=vr1" alt="Pipeline for VisReason and VisReason-Pro generation and supervision.">
           <figcaption>
             The pipeline derives semantic segments and ordinal-depth cues, generates spatial QA pairs, then iteratively emits and verifies
-            scene sketches, RoIs, rationales, and answers.
+            scene sketches, RoIs, rationales, and answers. VisReason-Pro uses these additional spatial priors to emphasize
+            relations such as left/right, above/below, in front of, and behind, without treating monocular depth as metric 3D ground truth.
           </figcaption>
         </figure>
       </section>
@@ -164,7 +174,8 @@
           <img src="assets/images/visreason/mllm.png?v=vr1" alt="Overview of the VisReason iterative MLLM reasoning paradigm.">
           <figcaption>
             The VisReason paradigm lets an MLLM generate rationales and RoIs, crop the original image, append new visual features,
-            and continue reasoning until the final answer is supported by localized evidence.
+            and continue reasoning until the final answer is supported by localized evidence. This turns a static image input into
+            an adaptive inference process where later steps can focus on details that were too small or ambiguous in the full view.
           </figcaption>
         </figure>
       </section>
@@ -175,6 +186,8 @@
           VisReason-Pro-7B achieves the strongest average score among the compared open-source MLLMs on the Visual-CoT benchmark.
           Gains are most pronounced for fine-grained recognition and spatial relation reasoning, the settings most aligned with
           RoI-grounded global-to-local supervision.
+          Qwen2.5-VL-7B remains the strongest model on Text/Doc tasks, while VisReason-Pro improves the overall balance by
+          specializing the model for localized visual evidence, relation reasoning, and stepwise grounded explanations.
         </p>
 
         <div class="table-wrap">
@@ -197,7 +210,36 @@
               <tr><td>InternVL-2.5-8B</td><td>0.841</td><td>0.747</td><td>0.697</td><td>0.643</td><td>0.738</td></tr>
               <tr><td>Qwen2.5-VL-7B</td><td><strong>0.918</strong></td><td>0.681</td><td>0.731</td><td>0.618</td><td>0.770</td></tr>
               <tr><td><strong>VisReason-7B</strong></td><td>0.879</td><td>0.792</td><td>0.731</td><td>0.690</td><td>0.791</td></tr>
-              <tr class="total"><td><strong>VisReason-Pro-7B</strong></td><td>0.890</td><td><strong>0.831</strong></td><td><strong>0.738</strong></td><td><strong>0.710</strong></td><td><strong>0.807</strong></td></tr>
+              <tr class="result-best"><td><strong>VisReason-Pro-7B</strong></td><td>0.890</td><td><strong>0.831</strong></td><td><strong>0.738</strong></td><td><strong>0.710</strong></td><td><strong>0.807</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          The improvements are not only answer-level. On the VisReason-Pro held-out suite, the model also improves RoI grounding
+          and better aligns its predicted regions with ordinal-depth cues. This is important because visual CoT is useful only when
+          the intermediate steps point to evidence that actually supports the answer.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <caption>Grounding and spatial reasoning diagnostics on the VisReason-Pro held-out suite.</caption>
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>IoU@0.5</th>
+                <th>IoU@0.75</th>
+                <th>Grounded ratio</th>
+                <th>BBox IoU</th>
+                <th>Depth error</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>MiniGPTv2</td><td>0.14</td><td>0.06</td><td>-</td><td>-</td><td>-</td></tr>
+              <tr><td>LLaVA-NeXT</td><td>0.29</td><td>0.19</td><td>0.039</td><td>0.207</td><td>0.394</td></tr>
+              <tr><td>InternVL-2.5</td><td>0.08</td><td>0.03</td><td>0.011</td><td>0.214</td><td>0.290</td></tr>
+              <tr><td>Qwen2.5-VL</td><td>-</td><td>-</td><td>0.035</td><td>0.115</td><td>0.294</td></tr>
+              <tr class="result-best"><td><strong>VisReason-Pro</strong></td><td><strong>0.34</strong></td><td><strong>0.23</strong></td><td><strong>0.276</strong></td><td><strong>0.278</strong></td><td><strong>0.266</strong></td></tr>
             </tbody>
           </table>
         </div>
@@ -227,13 +269,54 @@
           </table>
         </div>
 
+        <p>
+          The ablation shows that the full recipe matters: the base VisReason data improves fine-grained and relation-heavy tasks,
+          VisReason-Pro adds higher-fidelity spatial rationales, and adaptive zoom-in gives the strongest final average. A blinded
+          user study further suggests that the gains are visible to humans as more faithful, clearer reasoning traces.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <caption>Human evaluation on answer accuracy, grounded faithfulness, and stepwise clarity/sufficiency. Scores are on a 1-5 scale.</caption>
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Answer accuracy</th>
+                <th>Grounded faithfulness</th>
+                <th>Stepwise clarity</th>
+                <th>Mean</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>MiniGPTv2</td><td>2.37</td><td>1.94</td><td>1.88</td><td>2.06</td></tr>
+              <tr><td>VisCoT-7B</td><td>2.83</td><td>2.58</td><td>2.34</td><td>2.58</td></tr>
+              <tr><td>LLaVA-NeXT-8B</td><td>3.52</td><td>2.93</td><td>3.08</td><td>3.18</td></tr>
+              <tr><td>InternVL-2.5-8B</td><td>3.87</td><td>3.32</td><td>3.24</td><td>3.48</td></tr>
+              <tr><td><strong>VisReason-7B</strong></td><td>4.07</td><td>4.18</td><td>4.12</td><td>4.12</td></tr>
+              <tr class="result-best"><td><strong>VisReason-Pro-7B</strong></td><td><strong>4.19</strong></td><td><strong>4.46</strong></td><td><strong>4.37</strong></td><td><strong>4.34</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+
         <figure>
           <img src="assets/images/visreason/eval_results.png?v=vr1" alt="Qualitative visualization of VisReason inference modes and predicted bounding boxes.">
           <figcaption>
             Qualitative examples show how multi-round visual CoT progressively localizes critical regions and integrates evidence
-            from original and zoomed-in views.
+            from original and zoomed-in views. The visualization compares inference modes and highlights predicted boxes across
+            rounds, making it easier to see when the model attends to the correct evidence and when grounding errors affect the answer.
           </figcaption>
         </figure>
+      </section>
+
+      <section id="conclusion" class="section narrow">
+        <h2>Conclusion</h2>
+        <p>
+          VisReason provides large-scale, RoI-grounded process supervision for visual Chain-of-Thought reasoning.
+          By combining broad domain coverage with compact multi-round rationales and depth-augmented spatial cues, it teaches MLLMs
+          to reason through a more human-like global-to-local workflow. Experiments show that this supervision improves fine-grained
+          recognition, spatial relation reasoning, RoI localization, and the perceived faithfulness of reasoning traces.
+          We hope VisReason serves as a foundation for future work on interpretable, verifiable, and spatially grounded multimodal intelligence.
+        </p>
       </section>
 
       <section id="citation" class="section narrow">
