@@ -1,9 +1,9 @@
-# GenScale project page
+# VisReason project page
 
 Static GitHub Pages site for:
 
-**GenScale: A Benchmark for Relative Object Scale in Image Generation and Editing**
+**VisReason: A Large-Scale Dataset for Visual Chain-of-Thought Reasoning**
 
 Target URL:
 
-https://lingxiao-li.github.io/genscale.github.io/
+https://lingxiao-li.github.io/visreason.github.io/
